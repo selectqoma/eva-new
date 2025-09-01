@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Snake</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1 class="title">Snake</h1>
+      <div class="scoreboard">
+        <span id="score">Score: 0</span>
+        <span id="highScore">High: 0</span>
+      </div>
+    </header>
+
+    <main class="game">
+      <canvas id="gameCanvas" width="420" height="420" aria-label="Snake game board" role="img"></canvas>
+      <div class="controls">
+        <button id="pauseBtn" type="button" aria-label="Pause or resume">Pause</button>
+        <button id="restartBtn" type="button" aria-label="Restart game">Restart</button>
+      </div>
+      <div class="dpad" aria-hidden="true">
+        <button class="dpad-btn" data-dir="up">▲</button>
+        <div class="dpad-middle">
+          <button class="dpad-btn" data-dir="left">◀</button>
+          <button class="dpad-btn" data-dir="right">▶</button>
+        </div>
+        <button class="dpad-btn" data-dir="down">▼</button>
+      </div>
+      <p class="hint">Keyboard: Arrow keys / WASD / HJKL · Swipe on mobile</p>
+    </main>
+  </div>
+
+  <script src="./main.js"></script>
+  
+</body>
+</html>
+
+

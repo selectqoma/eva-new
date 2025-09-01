@@ -1,0 +1,70 @@
+:root {
+  color-scheme: light dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  display: grid;
+  place-items: center;
+  background: radial-gradient(1200px 600px at 50% -10%, #8be 0%, transparent 60%) fixed,
+              radial-gradient(1000px 500px at 110% 10%, #9fb 0%, transparent 60%) fixed,
+              linear-gradient(180deg, #0a0a0a, #121212);
+  color: #eaeaea;
+}
+
+.app { width: min(95vw, 720px); padding: 16px; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.title { font-size: 24px; margin: 0; letter-spacing: 0.5px; }
+
+.scoreboard { display: flex; gap: 12px; opacity: 0.9; }
+
+.game { display: grid; justify-items: center; gap: 12px; }
+
+canvas#gameCanvas {
+  width: min(95vw, 420px);
+  height: min(95vw, 420px);
+  background: #111;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+.controls { display: flex; gap: 8px; }
+.controls button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+  cursor: pointer;
+}
+.controls button:hover { background: rgba(255,255,255,0.12); }
+
+.dpad {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 8px;
+  user-select: none;
+}
+.dpad-middle { display: grid; grid-template-columns: auto auto; gap: 8px; }
+.dpad-btn {
+  width: 56px; height: 56px; border-radius: 12px; font-size: 20px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
+  color: inherit; cursor: pointer;
+}
+.hint { opacity: 0.7; font-size: 12px; margin: 8px 0 0; }
+
+@media (pointer:fine) {
+  .dpad { display: none; }
+}
+
+
