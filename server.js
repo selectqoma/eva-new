@@ -22,7 +22,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // The token is short‑lived and scoped for WebRTC with the specified model & voice.
 app.get('/session', async (req, res) => {
   try {
-    const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-4o-realtime-preview-2024-12-17';
+    const requestedModel = req.query.model && String(req.query.model);
+    const model = requestedModel || process.env.OPENAI_REALTIME_MODEL || 'gpt-4o-realtime-preview-2024-10-01';
     const body = {
       model,
       // Set default system behavior for the session.
