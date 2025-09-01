@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/session', async (req, res) => {
   try {
     const requestedModel = req.query.model && String(req.query.model);
-    const model = requestedModel || process.env.OPENAI_REALTIME_MODEL || 'gpt-4o-realtime-preview-2024-10-01';
+    const model = requestedModel || process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime';
     const body = {
       model,
       // Set default system behavior for the session.
