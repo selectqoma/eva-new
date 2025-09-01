@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>hello‑eva: Realtime Voice</title>
+    <style>
+      body { font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; }
+      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      label { font-weight: 600; }
+      textarea { width: 100%; max-width: 800px; height: 80px; }
+      pre { background: #f5f5f7; padding: 12px; border-radius: 8px; max-height: 220px; overflow: auto; }
+      button { padding: 8px 12px; }
+      select, input[type="text"] { padding: 6px 8px; }
+    </style>
+  </head>
+  <body>
+    <h2>hello‑eva: realtime, realistic voice</h2>
+    <div class="row">
+      <button id="connect">Connect</button>
+      <button id="disconnect" disabled>Disconnect</button>
+      <label for="voice">Voice:</label>
+      <select id="voice">
+        <option value="verse" selected>verse</option>
+        <option value="alloy">alloy</option>
+        <option value="aria">aria</option>
+        <option value="breeze">breeze</option>
+      </select>
+    </div>
+    <div style="height: 8px;"></div>
+    <div>
+      <label for="prompt">System style:</label>
+      <textarea id="prompt">You are Eva, a warm, concise receptionist. Greet callers, ask how you can help, and speak clearly with a pleasant, natural tone. If interrupted, gracefully stop and listen.</textarea>
+    </div>
+    <div style="height: 8px;"></div>
+    <audio id="speaker" autoplay playsinline></audio>
+    <div style="height: 8px;"></div>
+    <pre id="log"></pre>
+
+    <script>
+      const connectBtn = document.getElementById('connect');
+      const disconnectBtn = document.getElementById('disconnect');
+      const voiceSel = document.getElementById('voice');
+      const promptInput = document.getElementById('prompt');
+      const audioEl = document.getElementById('speaker');
+      const logEl = document.getElementById('log');
+
+      let pc = null;
+      let dc = null;
+      let micStream = null;
+
+      function log(msg) {
+        const time = new Date().toLocaleTimeString();
+        logEl.textContent += `[${time}] ${msg}\n`;
+        logEl.scrollTop = logEl.scrollHeight;
+        console.log(msg);
+      }
+
+      async function connect() {
+        connectBtn.disabled = true;
+        try {
+          const sessionRes = await fetch('/session');
+          if (!sessionRes.ok) throw new Error(await sessionRes.text());
+          const session = await sessionRes.json();
+
+          pc = new RTCPeerConnection();
+
+          pc.onconnectionstatechange = () => log(`PC state: ${pc.connectionState}`);
+          pc.oniceconnectionstatechange = () => log(`ICE state: ${pc.iceConnectionState}`);
+
+          // 1) Play remote audio from the model
+          const remoteStream = new MediaStream();
+          audioEl.srcObject = remoteStream;
+          pc.ontrack = (event) => {
+            for (const track of event.streams[0].getTracks()) {
+              remoteStream.addTrack(track);
+            }
+          };
+
+          // 2) Data channel for sending control/events (optional but useful)
+          dc = pc.createDataChannel('oai-events');
+          dc.onopen = () => log('DataChannel open');
+          dc.onmessage = (e) => log(`Event: ${e.data}`);
+
+          // 3) Add microphone track
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          for (const track of micStream.getTracks()) {
+            pc.addTrack(track, micStream);
+          }
+
+          // 4) Create SDP offer and send to OpenAI for WebRTC answer
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          const url = `https://api.openai.com/v1/realtime?model=${encodeURIComponent(session.model)}`;
+          const ansRes = await fetch(url, {
+            method: 'POST',
+            body: offer.sdp,
+            headers: {
+              'Authorization': `Bearer ${session.client_secret.value}`,
+              'Content-Type': 'application/sdp',
+              'OpenAI-Beta': 'realtime=v1'
+            }
+          });
+
+          if (!ansRes.ok) {
+            log(await ansRes.text());
+            throw new Error('Failed to create Realtime session (SDP)');
+          }
+
+          const answerSDP = await ansRes.text();
+          await pc.setRemoteDescription({ type: 'answer', sdp: answerSDP });
+          log('Connected to Realtime API');
+
+          // 5) Optional: update voice / system prompt after connect
+          const evt = {
+            type: 'session.update',
+            session: {
+              voice: voiceSel.value,
+              instructions: promptInput.value
+            }
+          };
+          dc.onopen = () => {
+            log('DataChannel open');
+            dc.send(JSON.stringify(evt));
+          };
+
+          connectBtn.disabled = true;
+          disconnectBtn.disabled = false;
+        } catch (err) {
+          log(err.message || String(err));
+          connectBtn.disabled = false;
+        }
+      }
+
+      async function disconnect() {
+        disconnectBtn.disabled = true;
+        try {
+          if (dc && dc.readyState === 'open') dc.close();
+          if (pc) pc.close();
+          if (micStream) micStream.getTracks().forEach(t => t.stop());
+          audioEl.srcObject = null;
+          log('Disconnected');
+        } finally {
+          connectBtn.disabled = false;
+        }
+      }
+
+      connectBtn.addEventListener('click', connect);
+      disconnectBtn.addEventListener('click', disconnect);
+    </script>
+  </body>
+  </html>
+
+
